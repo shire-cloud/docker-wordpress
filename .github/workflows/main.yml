@@ -1,47 +1,14 @@
-name: Deploy to Google Container Registry
-
-on:
-  push:
-    branches:
-    - master
-
-# Environment variables available to all jobs and steps in this workflow
-env:
-  GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
-  GCP_EMAIL: ${{ secrets.GCP_EMAIL }}
-  GITHUB_SHA: ${{ github.sha }}
-  IMAGE: wordpress
-
+name: Publish Docker
+on: [push]
 jobs:
-  publish:
-    name: Publish
+  build:
     runs-on: ubuntu-latest
     steps:
-
-    - name: Checkout
-      uses: actions/checkout@master
-
-    # Setup gcloud CLI
-    - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+    - uses: actions/checkout@master
+    - name: Publish to Registry
+      uses: elgohr/Publish-Docker-Github-Action@master
       with:
-        version: '270.0.0'
-        service_account_email: ${{ secrets.GCP_EMAIL }}
-        service_account_key: ${{ secrets.GCP_KEY }}
-
-    # Configure docker to use the gcloud command-line tool as a credential helper
-    - run: |
-        # Set up docker to authenticate
-        # via gcloud command-line tool.
-        gcloud auth configure-docker
-      
-    # Build the Docker image
-    - name: Build
-      run: |        
-        docker build -t gcr.io/"$GCP_PROJECT"/"$IMAGE":"$GITHUB_SHA" \
-          --build-arg GITHUB_SHA="$GITHUB_SHA" \
-          --build-arg GITHUB_REF="$GITHUB_REF" .
-
-    # Push the Docker image to Google Container Registry
-    - name: Publish
-      run: |
-        docker push gcr.io/$GCP_PROJECT/$IMAGE:$GITHUB_SHA
+        name: shire-host/docker-wordpress
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+        registry: docker.pkg.github.com
